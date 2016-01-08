@@ -32,7 +32,7 @@ computeCommandEncoder.setComputePipelineState(computePipelineFilter)
 
 
 // Prepare input data
-var myvector = [Float](count: 123456, repeatedValue: 0)
+var myvector = [Float](count: 2000, repeatedValue: 0)
 for (index, value) in myvector.enumerate() {
     myvector[index] = Float(index)
 }
@@ -78,7 +78,7 @@ var finalResultArray = [Float](count: myvector.count, repeatedValue: 0)
 // c. get data from GPU into Swift array
 data.getBytes(&finalResultArray, length:myvector.count * sizeof(Float))
 
-print(finalResultArray[0...9])
+print(finalResultArray)
 
 // d. YOU'RE ALL SET!
 
