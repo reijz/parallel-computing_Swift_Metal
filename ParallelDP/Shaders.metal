@@ -9,14 +9,34 @@
 #include <metal_stdlib>
 using namespace metal;
 
-kernel void sigmoid(device float *outVector [[ buffer(0) ]],
+kernel void initialize(device float *initValue [[ buffer(0) ]],
+                       uint id [[ thread_position_in_grid ]],
+                       uint i [[thread_position_in_threadgroup]],
+                       uint w [[threadgroup_position_in_grid]],
+                       uint S [[threads_per_threadgroup]]) {
+    initValue[id] = id;
+
+}
+
+
+kernel void iterate(const device float *inVector [[ buffer(0) ]],
+                    device float *outVector [[ buffer(1) ]],
+                    uint id [[ thread_position_in_grid ]],
+                    uint i [[thread_position_in_threadgroup]],
+                    uint w [[threadgroup_position_in_grid]],
+                    uint S [[threads_per_threadgroup]]) {
+    
+        outVector[id] = 2*inVector[id];
+}
+
+kernel void testThread(device float *result [[ buffer(0) ]],
                     uint id [[ thread_position_in_grid ]],
                     uint i [[thread_position_in_threadgroup]],
                     uint w [[threadgroup_position_in_grid]],
                     uint S [[threads_per_threadgroup]]) {
 
     if (id == w*S+i)
-        outVector[id] = id;
+        result[id] = id;
     else
-        outVector[id] = 0;
+        result[id] = 0;
 }
