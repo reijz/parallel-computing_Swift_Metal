@@ -9,23 +9,11 @@
 import Foundation
 import MetalKit
 
-// parameter setting for DP
+// parameter setting on the host
 let T = 2  // periods
 let K = 8  // capacity
 let L = 3  // dimension
-
-// parameters needs to be transmitted to device
-let paramemterVector: [Float] = [
-    2,           // order cost
-    1,              // deplete cost
-    1,              // salvage value
-    0.95            // discount rate
-]
-
-let holdCost: Float = 1.11
-let depleteCost: Float = 1
-let orderCost: Float = 1
-let rate: Float = 0.95
+let threadExecutionWidth = 128
 
 // basic calcuation of buffer
 let numberOfStates = Int(pow(Double(K), Double(L)))
@@ -33,7 +21,6 @@ let unitSize = sizeof(Float)
 let resultBufferSize = numberOfStates*unitSize
 
 // hardcoded to 512 for now (recommendation: read about threadExecutionWidth)
-let threadExecutionWidth = 128
 let numThreadsPerGroup = MTLSize(width:threadExecutionWidth,height:1,depth:1)
 let numGroups = MTLSize(width:(resultBufferSize+threadExecutionWidth-1)/threadExecutionWidth, height:1, depth:1)
 
@@ -48,7 +35,6 @@ var buffer:[MTLBuffer] = [
     device.newBufferWithLength(resultBufferSize, options: resourceOption),
     device.newBufferWithLength(resultBufferSize, options: resourceOption)
 ]
-var parameterBuffer:MTLBuffer = device.newBufferWithBytes(paramemterVector, length: unitSize*paramemterVector.count, options: resourceOption)
 
 // Get functions from Shaders and add to MTL library
 var defaultLibrary: MTLLibrary! = device.newDefaultLibrary()
@@ -61,7 +47,6 @@ var encoderInitDP = commandBufferInitDP.computeCommandEncoder()
 var pipelineFilterInit = try device.newComputePipelineStateWithFunction(initDP!)
 encoderInitDP.setComputePipelineState(pipelineFilterInit)
 encoderInitDP.setBuffer(buffer[0], offset: 0, atIndex: 0)
-encoderInitDP.setBuffer(parameterBuffer, offset: 0, atIndex: 2)
 encoderInitDP.dispatchThreadgroups(numThreadsPerGroup, threadsPerThreadgroup: numGroups)
 encoderInitDP.endEncoding()
 commandBufferInitDP.commit()
@@ -78,7 +63,6 @@ for t in 0..<T {
     
     encoderIterateDP.setBuffer(buffer[t%2], offset: 0, atIndex: 0)
     encoderIterateDP.setBuffer(buffer[(t+1)%2], offset: 0, atIndex: 1)
-    encoderIterateDP.setBuffer(parameterBuffer, offset: 0, atIndex: 2)
     
     encoderIterateDP.dispatchThreadgroups(numThreadsPerGroup, threadsPerThreadgroup: numGroups)
     encoderIterateDP.endEncoding()
