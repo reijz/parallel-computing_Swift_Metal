@@ -9,24 +9,26 @@
 #include <metal_stdlib>
 using namespace metal;
 
-kernel void initialize(device float *initValue [[ buffer(0) ]],
+kernel void initialize(const device float *parameter[[buffer(2)]],
+                       device float *initValue [[buffer(0)]],
                        uint id [[ thread_position_in_grid ]],
                        uint i [[thread_position_in_threadgroup]],
                        uint w [[threadgroup_position_in_grid]],
                        uint S [[threads_per_threadgroup]]) {
-    initValue[id] = id;
+    initValue[id] = parameter[2]*id;
 
 }
 
 
-kernel void iterate(const device float *inVector [[ buffer(0) ]],
+kernel void iterate(const device float *parameter[[buffer(2)]],
+                    const device float *inVector [[buffer(0)]],
                     device float *outVector [[ buffer(1) ]],
                     uint id [[ thread_position_in_grid ]],
                     uint i [[thread_position_in_threadgroup]],
                     uint w [[threadgroup_position_in_grid]],
                     uint S [[threads_per_threadgroup]]) {
     
-        outVector[id] = 2*inVector[id];
+        outVector[id] = parameter[0]*inVector[id];
 }
 
 kernel void testThread(device float *result [[ buffer(0) ]],
