@@ -9,16 +9,15 @@
 #include <metal_stdlib>
 using namespace metal;
 
-__constant int unitSize = 4;
 
 kernel void initialize(const device float *transmit[[buffer(0)]],
                        device float *initValue [[buffer(1)]],
                        uint id [[ thread_position_in_grid ]]) {
 
 //    batchSize*k*unitSize
-    int shift = transmit[1]*transmit[2];
-    
-    initValue[shift+id] = shift+id;
+    int idCurrent = transmit[0]*transmit[1]+id;
+    int idParent = idCurrent - transmit[0];
+    initValue[idCurrent] = initValue[idParent]+1; // 1 should be salvage value
 
 }
 

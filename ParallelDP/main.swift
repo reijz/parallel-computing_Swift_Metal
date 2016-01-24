@@ -46,6 +46,7 @@ let resultBufferSize = numberOfStates*unitSize
 
 // basic calculation of device related parameter
 let numThreadsPerGroup = MTLSize(width:threadExecutionWidth,height:1,depth:1)
+// the following to be deleted
 let numGroups = MTLSize(width:(numberOfStates+threadExecutionWidth-1)/threadExecutionWidth, height:1, depth:1)
 
 // Initialize Metal
@@ -83,7 +84,7 @@ let pipelineFilterIterate = try device.newComputePipelineStateWithFunction(itera
 
 // Initialize
 
-for l: Int in 0...L {
+for l: Int in 1...L {
     var batchSize: Int = 1
     var batchNum: Int = 2
     if l>0 {
@@ -97,7 +98,9 @@ for l: Int in 0...L {
         
         print(numGroupsBatch)
 
-        let dispatchIterator: [Float] = [Float(l), Float(batchSize), Float(batchIndex)]
+        // also transmit the batchSize to reduce computation load at device
+        let dispatchIterator: [Float] = [Float(batchSize), Float(batchIndex)]
+        // this way seems complicated, but parameterVector is immutable for security 
         let transmitVector = dispatchIterator+paramemterVector
         var transmitBuffer:MTLBuffer = device.newBufferWithBytes(transmitVector, length: unitSize*transmitVector.count, options: resourceOption)
 
