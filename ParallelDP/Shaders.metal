@@ -23,7 +23,8 @@ kernel void initialize(device float *initValue [[buffer(0)]],
                        uint i [[thread_position_in_threadgroup]],
                        uint w [[threadgroup_position_in_grid]],
                        uint S [[threads_per_threadgroup]]) {
-    initValue[id] = orderCost*id;
+
+    initValue[id] = id;
 
 }
 
@@ -35,7 +36,7 @@ kernel void iterate(const device float *inVector [[buffer(0)]],
                     uint w [[ threadgroup_position_in_grid ]],
                     uint S [[ threads_per_threadgroup ]]) {
     
-        outVector[id] = discountRate*inVector[id];
+    outVector[id] = 2*inVector[id];
 }
 
 // to test the understanding of thread related concepts

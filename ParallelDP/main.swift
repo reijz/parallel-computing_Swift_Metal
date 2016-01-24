@@ -9,23 +9,41 @@
 import Foundation
 import MetalKit
 
-// parameter setting on the host
-let T = 2  // periods
+// parameter only needed by the host
+let T = 5  // periods
+// parameters needed by both the host and the device
 let K = 8  // capacity
-let L = 3  // dimension
-let threadExecutionWidth = 128
+let L = 8  // dimension
+
+// hardcoded to the following number
+// Need to understand more about threadExecutionWidth for optimal config
+let threadExecutionWidth = 512
 
 // basic calcuation of buffer
 let numberOfStates = Int(pow(Double(K), Double(L)))
 let unitSize = sizeof(Float)
 let resultBufferSize = numberOfStates*unitSize
 
-// hardcoded to 512 for now (recommendation: read about threadExecutionWidth)
+// basic calculation of device related parameter
 let numThreadsPerGroup = MTLSize(width:threadExecutionWidth,height:1,depth:1)
-let numGroups = MTLSize(width:(resultBufferSize+threadExecutionWidth-1)/threadExecutionWidth, height:1, depth:1)
+let numGroups = MTLSize(width:(numberOfStates+threadExecutionWidth-1)/threadExecutionWidth, height:1, depth:1)
 
 // Initialize Metal
+// Get the default device, which is the same as the one monitor is using
 var device: MTLDevice! = MTLCreateSystemDefaultDevice()
+// In the following, choose the device NOT used by monitor
+let devices: [MTLDevice] = MTLCopyAllDevices()
+for metalDevice: MTLDevice in devices {
+    if metalDevice.headless == true {
+        device = metalDevice
+    }
+}
+// exit with an error message if all devices are used by monitor
+if !device.headless {
+    print("no dedicated device found")
+    exit(1)
+}
+
 // Build command queue
 var commandQueue: MTLCommandQueue! = device.newCommandQueue()
 
@@ -47,7 +65,7 @@ var encoderInitDP = commandBufferInitDP.computeCommandEncoder()
 var pipelineFilterInit = try device.newComputePipelineStateWithFunction(initDP!)
 encoderInitDP.setComputePipelineState(pipelineFilterInit)
 encoderInitDP.setBuffer(buffer[0], offset: 0, atIndex: 0)
-encoderInitDP.dispatchThreadgroups(numThreadsPerGroup, threadsPerThreadgroup: numGroups)
+encoderInitDP.dispatchThreadgroups(numGroups, threadsPerThreadgroup: numThreadsPerGroup)
 encoderInitDP.endEncoding()
 commandBufferInitDP.commit()
 commandBufferInitDP.waitUntilCompleted()
@@ -64,19 +82,17 @@ for t in 0..<T {
     encoderIterateDP.setBuffer(buffer[t%2], offset: 0, atIndex: 0)
     encoderIterateDP.setBuffer(buffer[(t+1)%2], offset: 0, atIndex: 1)
     
-    encoderIterateDP.dispatchThreadgroups(numThreadsPerGroup, threadsPerThreadgroup: numGroups)
+    encoderIterateDP.dispatchThreadgroups(numGroups, threadsPerThreadgroup: numThreadsPerGroup)
     encoderIterateDP.endEncoding()
     commandBufferIterateDP.commit()
     commandBufferIterateDP.waitUntilCompleted()
 
 }
 
-// a. Get GPU data
+// Get data fro device
 var data = NSData(bytesNoCopy: buffer[T%2].contents(), length: resultBufferSize, freeWhenDone: false)
-// b. prepare Swift array large enough to receive data from GPU
 var finalResultArray = [Float](count: numberOfStates, repeatedValue: 0)
-// c. get data from GPU into Swift array
 data.getBytes(&finalResultArray, length:resultBufferSize)
 
-print(finalResultArray)
+print(finalResultArray[numberOfStates-1])
 
