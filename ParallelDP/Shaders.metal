@@ -7,22 +7,14 @@
 //
 
 #include <metal_stdlib>
+#include "parameters.h"
 using namespace metal;
 
-// Parameters on the device needs
-__constant float holdingCost = 1;
-__constant float orderCost = 1.5;
-__constant float discountRate = 2;
-__constant float price = 1.5;
-__constant float desposalCost = 1.5;
-__constant float salvageValue = 1.5;
-
-
 kernel void initialize(device float *initValue [[buffer(0)]],
-                       uint id [[ thread_position_in_grid ]],
-                       uint i [[thread_position_in_threadgroup]],
-                       uint w [[threadgroup_position_in_grid]],
-                       uint S [[threads_per_threadgroup]]) {
+                       uint id [[ thread_position_in_grid ]]) {
+
+    //int batchIndex = ;
+    //int batchSize = ;
 
     initValue[id] = id;
 
@@ -36,8 +28,9 @@ kernel void iterate(const device float *inVector [[buffer(0)]],
                     uint w [[ threadgroup_position_in_grid ]],
                     uint S [[ threads_per_threadgroup ]]) {
     
-    outVector[id] = 2*inVector[id];
+    outVector[id] = inVector[id];
 }
+
 
 // to test the understanding of thread related concepts
 kernel void testThread(device float *result [[ buffer(0) ]],

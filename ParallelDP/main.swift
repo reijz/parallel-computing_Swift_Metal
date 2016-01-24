@@ -10,14 +10,15 @@ import Foundation
 import MetalKit
 
 // parameter only needed by the host
-let T = 5  // periods
+let numPeriods = 5  // periods
+
 // parameters needed by both the host and the device
 let K = 8  // capacity
-let L = 8  // dimension
+let L = 4  // dimension
 
 // hardcoded to the following number
 // Need to understand more about threadExecutionWidth for optimal config
-let threadExecutionWidth = 512
+let threadExecutionWidth = 128
 
 // basic calcuation of buffer
 let numberOfStates = Int(pow(Double(K), Double(L)))
@@ -60,19 +61,30 @@ let initDP = defaultLibrary.newFunctionWithName("initialize")
 let iterateDP = defaultLibrary.newFunctionWithName("iterate")
 
 // Initialize
-var commandBufferInitDP: MTLCommandBuffer! = commandQueue.commandBuffer()
-var encoderInitDP = commandBufferInitDP.computeCommandEncoder()
 var pipelineFilterInit = try device.newComputePipelineStateWithFunction(initDP!)
-encoderInitDP.setComputePipelineState(pipelineFilterInit)
-encoderInitDP.setBuffer(buffer[0], offset: 0, atIndex: 0)
-encoderInitDP.dispatchThreadgroups(numGroups, threadsPerThreadgroup: numThreadsPerGroup)
-encoderInitDP.endEncoding()
-commandBufferInitDP.commit()
-commandBufferInitDP.waitUntilCompleted()
+
+for l: Int in 0..<L {
+    let batchSize = Int(pow(Float(K),Float(l)))
+    let numGroupsBatch = MTLSize(width:(batchSize+threadExecutionWidth-1)/threadExecutionWidth, height:1, depth:1)
+    for k in 1..<K {
+        print(batchSize)
+        print(numGroupsBatch)
+        var commandBufferInitDP: MTLCommandBuffer! = commandQueue.commandBuffer()
+        var encoderInitDP = commandBufferInitDP.computeCommandEncoder()
+        encoderInitDP.setComputePipelineState(pipelineFilterInit)
+        // offset is very important
+        encoderInitDP.setBuffer(buffer[0], offset: batchSize*k*unitSize, atIndex: 0)
+        encoderInitDP.dispatchThreadgroups(numGroupsBatch, threadsPerThreadgroup: numThreadsPerGroup)
+        encoderInitDP.endEncoding()
+        commandBufferInitDP.commit()
+        commandBufferInitDP.waitUntilCompleted()
+        
+    }
+}
 
 // Iterate T periods
 // It's import that t starts from 0%2=0, since we start with buffer[0]
-for t in 0..<T {
+for t in 0..<numPeriods {
     
     var commandBufferIterateDP: MTLCommandBuffer! = commandQueue.commandBuffer()
     var encoderIterateDP = commandBufferIterateDP.computeCommandEncoder()
@@ -90,9 +102,9 @@ for t in 0..<T {
 }
 
 // Get data fro device
-var data = NSData(bytesNoCopy: buffer[T%2].contents(), length: resultBufferSize, freeWhenDone: false)
+var data = NSData(bytesNoCopy: buffer[numPeriods%2].contents(), length: resultBufferSize, freeWhenDone: false)
 var finalResultArray = [Float](count: numberOfStates, repeatedValue: 0)
 data.getBytes(&finalResultArray, length:resultBufferSize)
 
-print(finalResultArray[numberOfStates-1])
+print(finalResultArray)
 
