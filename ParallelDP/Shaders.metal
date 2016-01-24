@@ -7,26 +7,26 @@
 //
 
 #include <metal_stdlib>
-#include "parameters.h"
 using namespace metal;
 
-kernel void initialize(device float *initValue [[buffer(0)]],
+__constant int unitSize = 4;
+
+kernel void initialize(const device float *transmit[[buffer(0)]],
+                       device float *initValue [[buffer(1)]],
                        uint id [[ thread_position_in_grid ]]) {
 
-    //int batchIndex = ;
-    //int batchSize = ;
-
-    initValue[id] = id;
+//    batchSize*k*unitSize
+    int shift = transmit[1]*transmit[2];
+    
+    initValue[shift+id] = shift+id;
 
 }
 
 
-kernel void iterate(const device float *inVector [[buffer(0)]],
-                    device float *outVector [[ buffer(1) ]],
-                    uint id [[ thread_position_in_grid ]],
-                    uint i [[ thread_position_in_threadgroup ]],
-                    uint w [[ threadgroup_position_in_grid ]],
-                    uint S [[ threads_per_threadgroup ]]) {
+kernel void iterate(//const device float *parameters[[buffer(0)]],
+                    const device float *inVector [[buffer(1)]],
+                    device float *outVector [[ buffer(2) ]],
+                    uint id [[ thread_position_in_grid ]]) {
     
     outVector[id] = inVector[id];
 }

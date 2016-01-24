@@ -11,14 +11,33 @@ import MetalKit
 
 // parameter only needed by the host
 let numPeriods = 5  // periods
-
 // parameters needed by both the host and the device
 let K = 8  // capacity
 let L = 4  // dimension
 
+let salvageValue: Float = 1.5
+let holdingCost: Float = 1.11
+let orderCost: Float = 1
+let desposalCost: Float = 1
+let discountRate: Float = 0.95
+let price: Float = 1.5
+
+
 // hardcoded to the following number
 // Need to understand more about threadExecutionWidth for optimal config
 let threadExecutionWidth = 128
+
+// parameters needs to be transmitted to device
+let paramemterVector: [Float] = [
+    Float(K),
+    Float(L),
+    salvageValue,
+    holdingCost,
+    orderCost,
+    desposalCost,
+    discountRate,
+    price
+]
 
 // basic calcuation of buffer
 let numberOfStates = Int(pow(Double(K), Double(L)))
@@ -40,10 +59,10 @@ for metalDevice: MTLDevice in devices {
     }
 }
 // exit with an error message if all devices are used by monitor
-if !device.headless {
-    print("no dedicated device found")
-    exit(1)
-}
+//if !device.headless {
+//    print("no dedicated device found")
+//    exit(1)
+//}
 
 // Build command queue
 var commandQueue: MTLCommandQueue! = device.newCommandQueue()
@@ -58,22 +77,36 @@ var buffer:[MTLBuffer] = [
 // Get functions from Shaders and add to MTL library
 var defaultLibrary: MTLLibrary! = device.newDefaultLibrary()
 let initDP = defaultLibrary.newFunctionWithName("initialize")
+let pipelineFilterInit = try device.newComputePipelineStateWithFunction(initDP!)
 let iterateDP = defaultLibrary.newFunctionWithName("iterate")
+let pipelineFilterIterate = try device.newComputePipelineStateWithFunction(iterateDP!)
 
 // Initialize
-var pipelineFilterInit = try device.newComputePipelineStateWithFunction(initDP!)
 
-for l: Int in 0..<L {
-    let batchSize = Int(pow(Float(K),Float(l)))
+for l: Int in 0...L {
+    var batchSize: Int = 1
+    var batchNum: Int = 2
+    if l>0 {
+        batchSize = Int(pow(Float(K),Float(l-1)))
+        batchNum = K
+    }
+
     let numGroupsBatch = MTLSize(width:(batchSize+threadExecutionWidth-1)/threadExecutionWidth, height:1, depth:1)
-    for k in 1..<K {
-        print(batchSize)
+    print(batchSize)
+    for batchIndex: Int in 1..<batchNum {
+        
         print(numGroupsBatch)
+
+        let dispatchIterator: [Float] = [Float(l), Float(batchSize), Float(batchIndex)]
+        let transmitVector = dispatchIterator+paramemterVector
+        var transmitBuffer:MTLBuffer = device.newBufferWithBytes(transmitVector, length: unitSize*transmitVector.count, options: resourceOption)
+
         var commandBufferInitDP: MTLCommandBuffer! = commandQueue.commandBuffer()
         var encoderInitDP = commandBufferInitDP.computeCommandEncoder()
         encoderInitDP.setComputePipelineState(pipelineFilterInit)
         // offset is very important
-        encoderInitDP.setBuffer(buffer[0], offset: batchSize*k*unitSize, atIndex: 0)
+        encoderInitDP.setBuffer(buffer[0], offset: 0, atIndex: 1)
+        encoderInitDP.setBuffer(transmitBuffer, offset: 0, atIndex: 0)
         encoderInitDP.dispatchThreadgroups(numGroupsBatch, threadsPerThreadgroup: numThreadsPerGroup)
         encoderInitDP.endEncoding()
         commandBufferInitDP.commit()
@@ -88,11 +121,12 @@ for t in 0..<numPeriods {
     
     var commandBufferIterateDP: MTLCommandBuffer! = commandQueue.commandBuffer()
     var encoderIterateDP = commandBufferIterateDP.computeCommandEncoder()
-    var pipelineFilterIterate = try device.newComputePipelineStateWithFunction(iterateDP!)
+
     encoderIterateDP.setComputePipelineState(pipelineFilterIterate)
     
-    encoderIterateDP.setBuffer(buffer[t%2], offset: 0, atIndex: 0)
-    encoderIterateDP.setBuffer(buffer[(t+1)%2], offset: 0, atIndex: 1)
+//    encoderIterateDP.setBuffer(parameterBuffer, offset: 0, atIndex: 0)
+    encoderIterateDP.setBuffer(buffer[t%2], offset: 0, atIndex: 1)
+    encoderIterateDP.setBuffer(buffer[(t+1)%2], offset: 0, atIndex: 2)
     
     encoderIterateDP.dispatchThreadgroups(numGroups, threadsPerThreadgroup: numThreadsPerGroup)
     encoderIterateDP.endEncoding()
