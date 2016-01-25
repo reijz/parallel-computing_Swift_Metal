@@ -10,7 +10,7 @@
 using namespace metal;
 
 
-kernel void initialize(const device float *batch[[buffer(1)]],
+kernel void initialize(const device uint *batch[[buffer(1)]],
                        const device float *parameters[[buffer(2)]],
                        device float *initValue [[buffer(0)]],
                        uint id [[ thread_position_in_grid ]]) {
@@ -18,11 +18,10 @@ kernel void initialize(const device float *batch[[buffer(1)]],
     uint idCurrent = batch[0]*batch[1]+id;
     uint idParent = idCurrent - batch[0];
     initValue[idCurrent] = initValue[idParent] + 1;//parameters[2]; // salvage value per unit
-
 }
 
 
-kernel void iterate(const device float *batch[[buffer(2)]],
+kernel void iterate(const device uint *batch[[buffer(2)]],
                     const device float *parameters[[buffer(3)]],
                     const device float *inVector [[buffer(0)]],
                     device float *outVector [[ buffer(1) ]],
@@ -30,7 +29,9 @@ kernel void iterate(const device float *batch[[buffer(2)]],
 
     uint idCurrent = batch[0]*batch[1]+id;
     uint idParent = idCurrent - batch[0];
+
     outVector[idCurrent] = inVector[idCurrent];
+
 }
 
 

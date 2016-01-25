@@ -10,10 +10,10 @@ import Foundation
 import MetalKit
 
 // parameter only needed by the host
-let numPeriods = 3  // periods
+let numPeriods = 0  // periods
 // parameters needed by both the host and the device
-let K = 7  // capacity
-let L = 4  // dimension
+let K = 4  // capacity
+let L = 13  // dimension
 
 let salvageValue: Float = 1.5
 let holdingCost: Float = 1.11
@@ -86,15 +86,16 @@ let pipelineFilterIterate = try device.newComputePipelineStateWithFunction(itera
 // Initialize
 for l: Int in 1...L {
 
-    let batchSize = Int(pow(Float(K),Float(l-1)))
-    let numGroupsBatch = MTLSize(width:(batchSize+threadExecutionWidth-1)/threadExecutionWidth, height:1, depth:1)
+    let batchSize:uint = uint(pow(Float(K),Float(l-1)))
+    let numGroupsBatch = MTLSize(width:(Int(batchSize)+threadExecutionWidth-1)/threadExecutionWidth, height:1, depth:1)
     // print("Batch Size = ", batchSize)
     
-    for batchIndex: Int in 1..<K {
+    for batchIndex: uint in 1..<uint(K) {
         
+        print("Batch Size = ", batchSize, "batchIndex = ", batchIndex)
         // print(numGroupsBatch)
-        let dispatchIterator: [Float] = [Float(batchSize), Float(batchIndex)]
-        var dispatchBuffer:MTLBuffer = device.newBufferWithBytes(dispatchIterator, length: unitSize*dispatchIterator.count, options: resourceOption)
+        let dispatchIterator: [uint] = [batchSize, batchIndex]
+        var dispatchBuffer:MTLBuffer = device.newBufferWithBytes(dispatchIterator, length: sizeof(uint)*dispatchIterator.count, options: resourceOption)
         
         var commandBufferInitDP: MTLCommandBuffer! = commandQueue.commandBuffer()
         var encoderInitDP = commandBufferInitDP.computeCommandEncoder()
@@ -158,5 +159,6 @@ var data = NSData(bytesNoCopy: buffer[numPeriods%2].contents(), length: resultBu
 var finalResultArray = [Float](count: numberOfStates, repeatedValue: 0)
 data.getBytes(&finalResultArray, length:resultBufferSize)
 
-print(finalResultArray)
+print(finalResultArray[numberOfStates-20..<numberOfStates])
+
 
