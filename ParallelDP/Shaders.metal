@@ -10,24 +10,27 @@
 using namespace metal;
 
 
-kernel void initialize(const device float *transmit[[buffer(0)]],
-                       device float *initValue [[buffer(1)]],
+kernel void initialize(const device float *batch[[buffer(1)]],
+                       const device float *parameters[[buffer(2)]],
+                       device float *initValue [[buffer(0)]],
                        uint id [[ thread_position_in_grid ]]) {
 
-//    batchSize*k*unitSize
-    int idCurrent = transmit[0]*transmit[1]+id;
-    int idParent = idCurrent - transmit[0];
-    initValue[idCurrent] = initValue[idParent]+1; // 1 should be salvage value
+    uint idCurrent = batch[0]*batch[1]+id;
+    uint idParent = idCurrent - batch[0];
+    initValue[idCurrent] = initValue[idParent] + 1;//parameters[2]; // salvage value per unit
 
 }
 
 
-kernel void iterate(//const device float *parameters[[buffer(0)]],
-                    const device float *inVector [[buffer(1)]],
-                    device float *outVector [[ buffer(2) ]],
+kernel void iterate(const device float *batch[[buffer(2)]],
+                    const device float *parameters[[buffer(3)]],
+                    const device float *inVector [[buffer(0)]],
+                    device float *outVector [[ buffer(1) ]],
                     uint id [[ thread_position_in_grid ]]) {
-    
-    outVector[id] = inVector[id];
+
+    uint idCurrent = batch[0]*batch[1]+id;
+    uint idParent = idCurrent - batch[0];
+    outVector[idCurrent] = inVector[idCurrent];
 }
 
 
