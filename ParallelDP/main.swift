@@ -10,7 +10,7 @@ import Foundation
 import MetalKit
 
 // parameter only needed by the host
-let numPeriods = 0  // periods
+let numPeriods = 2  // periods
 // parameters needed by both the host and the device
 let K = 4  // capacity
 let L = 13  // dimension
@@ -93,7 +93,7 @@ for l: Int in 1...L {
     for batchIndex: uint in 1..<uint(K) {
         
         print("Batch Size = ", batchSize, "batchIndex = ", batchIndex)
-        // print(numGroupsBatch)
+
         let dispatchIterator: [uint] = [batchSize, batchIndex]
         var dispatchBuffer:MTLBuffer = device.newBufferWithBytes(dispatchIterator, length: sizeof(uint)*dispatchIterator.count, options: resourceOption)
         
@@ -119,21 +119,23 @@ for l: Int in 1...L {
 for t in 0..<numPeriods {
     
     for l: Int in 0...L {
-        var batchSize: Int = 1
-        var batchNum: Int = 2
+        var batchSize: uint = 1
+        var batchNum: uint = 1
+        var batchStart: uint = 0
         if l>0 {
-            batchSize = Int(pow(Float(K),Float(l-1)))
-            batchNum = K
+            batchSize = uint(pow(Float(K),Float(l-1)))
+            batchStart = 1
+            batchNum = uint(K)
         }
 
-        let numGroupsBatch = MTLSize(width:(batchSize+threadExecutionWidth-1)/threadExecutionWidth, height:1, depth:1)
-        print("Batch Size = ", batchSize)
+        let numGroupsBatch = MTLSize(width:(Int(batchSize)+threadExecutionWidth-1)/threadExecutionWidth, height:1, depth:1)
 
-        for batchIndex: Int in 1..<batchNum {
+        for batchIndex: uint in batchStart..<batchNum {
+
+            print("Batch Size = ", batchSize, "batchIndex = ", batchIndex)
             
-            print(numGroupsBatch)
-            let dispatchIterator: [Float] = [Float(batchSize), Float(batchIndex)]
-            var dispatchBuffer:MTLBuffer = device.newBufferWithBytes(dispatchIterator, length: unitSize*dispatchIterator.count, options: resourceOption)
+            let dispatchIterator: [uint] = [batchSize, batchIndex]
+            var dispatchBuffer:MTLBuffer = device.newBufferWithBytes(dispatchIterator, length: sizeof(uint)*dispatchIterator.count, options: resourceOption)
             
             var commandBufferIterateDP: MTLCommandBuffer! = commandQueue.commandBuffer()
             var encoderIterateDP = commandBufferIterateDP.computeCommandEncoder()

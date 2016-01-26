@@ -30,7 +30,7 @@ kernel void iterate(const device uint *batch[[buffer(2)]],
     uint idCurrent = batch[0]*batch[1]+id;
     uint idParent = idCurrent - batch[0];
 
-    outVector[idCurrent] = inVector[idCurrent];
+    outVector[idCurrent] = 2*inVector[idCurrent];
 
 }
 
