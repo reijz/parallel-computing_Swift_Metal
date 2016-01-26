@@ -27,6 +27,7 @@
 		2A0EA2651C362F8A003BF0CF /* ParallelDP */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = ParallelDP; sourceTree = BUILT_PRODUCTS_DIR; };
 		2A0EA2681C362F8A003BF0CF /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		2A0EA26F1C3654EE003BF0CF /* Shaders.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = Shaders.metal; sourceTree = "<group>"; };
+		2A6953E51C5793BE00C77AD8 /* parameters.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = parameters.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -61,6 +62,7 @@
 			children = (
 				2A0EA2681C362F8A003BF0CF /* main.swift */,
 				2A0EA26F1C3654EE003BF0CF /* Shaders.metal */,
+				2A6953E51C5793BE00C77AD8 /* parameters.plist */,
 			);
 			path = ParallelDP;
 			sourceTree = "<group>";
