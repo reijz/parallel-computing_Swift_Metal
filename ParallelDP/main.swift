@@ -10,17 +10,19 @@ import Foundation
 import MetalKit
 
 // parameter only needed by the host
-let numPeriods = 2  // periods
+let numPeriods = 0 // periods
 // parameters needed by both the host and the device
 let K = 4  // capacity
-let L = 13  // dimension
+let L = 4 // dimension
+
 
 let salvageValue: Float = 1.5
 let holdingCost: Float = 1.11
 let orderCost: Float = 1
-let desposalCost: Float = 1
+let disposalCost: Float = 1
 let discountRate: Float = 0.95
-let price: Float = 1.5
+let price: Float = 10
+let max_demand: Float = 1.0
 
 // hardcoded to the following number
 // Need to understand more about threadExecutionWidth for optimal config
@@ -34,9 +36,13 @@ let paramemterVector: [Float] = [
     salvageValue,
     holdingCost,
     orderCost,
-    desposalCost,
+    disposalCost,
     discountRate,
-    price
+    price,
+    max_demand
+]
+let distributionVector: [Float] = [
+    1.0
 ]
 
 // basic calcuation of buffer
@@ -72,9 +78,13 @@ var buffer:[MTLBuffer] = [
     device.newBufferWithLength(resultBufferSize, options: resourceOption),
     device.newBufferWithLength(resultBufferSize, options: resourceOption)
 ]
+var actionBuffer:[MTLBuffer] = [
+    device.newBufferWithLength(resultBufferSize, options: resourceOption),
+    device.newBufferWithLength(resultBufferSize, options: resourceOption)
+]
 var parameterBuffer:MTLBuffer = device.newBufferWithBytes(paramemterVector, length: unitSize*paramemterVector.count, options: resourceOption)
 // put distriburion buffer here
-
+var distributionBuffer:MTLBuffer = device.newBufferWithBytes(paramemterVector, length: unitSize*distributionVector.count, options: resourceOption)
 
 // Get functions from Shaders and add to MTL library
 var defaultLibrary: MTLLibrary! = device.newDefaultLibrary()
@@ -132,7 +142,7 @@ for t in 0..<numPeriods {
 
         for batchIndex: uint in batchStart..<batchNum {
 
-            print("Batch Size = ", batchSize, "batchIndex = ", batchIndex)
+            print("Iterate Batch Size = ", batchSize, "batchIndex = ", batchIndex)
             
             let dispatchIterator: [uint] = [batchSize, batchIndex]
             var dispatchBuffer:MTLBuffer = device.newBufferWithBytes(dispatchIterator, length: sizeof(uint)*dispatchIterator.count, options: resourceOption)
@@ -146,6 +156,9 @@ for t in 0..<numPeriods {
             encoderIterateDP.setBuffer(buffer[(t+1)%2], offset: 0, atIndex: 1)
             encoderIterateDP.setBuffer(dispatchBuffer, offset: 0, atIndex: 2)
             encoderIterateDP.setBuffer(parameterBuffer, offset: 0, atIndex: 3)
+            encoderIterateDP.setBuffer(distributionBuffer, offset: 0, atIndex: 4)
+            encoderIterateDP.setBuffer(actionBuffer[0], offset: 0, atIndex: 5)
+            encoderIterateDP.setBuffer(actionBuffer[1], offset: 0, atIndex: 6)
             
             encoderIterateDP.dispatchThreadgroups(numGroupsBatch, threadsPerThreadgroup: numThreadsPerGroup)
             encoderIterateDP.endEncoding()
