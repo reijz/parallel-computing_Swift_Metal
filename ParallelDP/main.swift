@@ -10,7 +10,7 @@ import Foundation
 import MetalKit
 
 // parameter only needed by the host
-let numPeriods = 0 // periods
+let numPeriods = 2  // periods
 // parameters needed by both the host and the device
 let K = 4  // capacity
 let L = 4 // dimension
@@ -56,14 +56,14 @@ let numThreadsPerGroup = MTLSize(width:threadExecutionWidth,height:1,depth:1)
 // Initialize Metal
 // Get the default device, which is the same as the one monitor is using
 var device: MTLDevice! = MTLCreateSystemDefaultDevice()
-// In the following, choose the device NOT used by monitor
+//// In the following, choose the device NOT used by monitor
 //let devices: [MTLDevice] = MTLCopyAllDevices()
 //for metalDevice: MTLDevice in devices {
 //    if metalDevice.headless == true {
 //        device = metalDevice
 //    }
 //}
-// exit with an error message if all devices are used by monitor
+//// exit with an error message if all devices are used by monitor
 //if !device.headless {
 //    print("no dedicated device found")
 //    exit(1)
@@ -76,11 +76,9 @@ var commandQueue: MTLCommandQueue! = device.newCommandQueue()
 let resourceOption = MTLResourceOptions()
 var buffer:[MTLBuffer] = [
     device.newBufferWithLength(resultBufferSize, options: resourceOption),
-    device.newBufferWithLength(resultBufferSize, options: resourceOption)
-]
-var actionBuffer:[MTLBuffer] = [
     device.newBufferWithLength(resultBufferSize, options: resourceOption),
-    device.newBufferWithLength(resultBufferSize, options: resourceOption)
+    device.newBufferWithLength(resultBufferSize, options: resourceOption), // depletion action
+    device.newBufferWithLength(resultBufferSize, options: resourceOption)  // order action
 ]
 var parameterBuffer:MTLBuffer = device.newBufferWithBytes(paramemterVector, length: unitSize*paramemterVector.count, options: resourceOption)
 // put distriburion buffer here
@@ -154,11 +152,12 @@ for t in 0..<numPeriods {
             
             encoderIterateDP.setBuffer(buffer[t%2], offset: 0, atIndex: 0)
             encoderIterateDP.setBuffer(buffer[(t+1)%2], offset: 0, atIndex: 1)
-            encoderIterateDP.setBuffer(dispatchBuffer, offset: 0, atIndex: 2)
-            encoderIterateDP.setBuffer(parameterBuffer, offset: 0, atIndex: 3)
-            encoderIterateDP.setBuffer(distributionBuffer, offset: 0, atIndex: 4)
-            encoderIterateDP.setBuffer(actionBuffer[0], offset: 0, atIndex: 5)
-            encoderIterateDP.setBuffer(actionBuffer[1], offset: 0, atIndex: 6)
+            encoderIterateDP.setBuffer(buffer[2], offset: 0, atIndex: 2)
+            encoderIterateDP.setBuffer(buffer[3], offset: 0, atIndex: 3)
+            encoderIterateDP.setBuffer(dispatchBuffer, offset: 0, atIndex: 4)
+            encoderIterateDP.setBuffer(parameterBuffer, offset: 0, atIndex: 5)
+            encoderIterateDP.setBuffer(distributionBuffer, offset: 0, atIndex: 6)
+
             
             encoderIterateDP.dispatchThreadgroups(numGroupsBatch, threadsPerThreadgroup: numThreadsPerGroup)
             encoderIterateDP.endEncoding()
