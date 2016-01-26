@@ -25,12 +25,99 @@ kernel void iterate(const device uint *batch[[buffer(2)]],
                     const device float *parameters[[buffer(3)]],
                     const device float *inVector [[buffer(0)]],
                     device float *outVector [[ buffer(1) ]],
+                    const device float *distribution[[buffer(4)]],
+                    device uint *deplete[[buffer(5)]],
+                    device uint *order[[buffer(6)]],
                     uint id [[ thread_position_in_grid ]]) {
-
+    
+    int K= parameters[0], L= parameters[1], max_demand= int(parameters[8]);
     uint idCurrent = batch[0]*batch[1]+id;
     uint idParent = idCurrent - batch[0];
-
-    outVector[idCurrent] = 2*inVector[idCurrent];
+    int idState[L + 1];
+    
+    float salvageValue= parameters[2];
+    float holdingCost= parameters[3];
+    float orderCost= parameters[4];
+    float disposalCost= parameters[5];
+    float discountRate= parameters[6];
+    float price= parameters[7];
+    
+    
+    int min_deplete = 0, max_deplete = 1, min_order = 0, max_order = K;
+    if (idCurrent != 0){
+        min_deplete = deplete[idParent] + int(deplete[idParent] != 0);
+        max_deplete = deplete[idParent] + 2;
+        int min_order_1 = order[idParent] + int(deplete[idParent] != 0) - 1;
+        min_order = min_order_1 * int(min_order_1 >= 0);
+        max_order = order[idParent] + 1;
+    }
+    
+    uint opt_deplete = 0;
+    uint opt_order = 0;
+    float opt_value = 0., state_value = 0.;
+    for (int i = min_deplete; i < max_deplete; i++){
+        for (int j = min_order; j < max_order; j++){
+            state_value= 0.;
+            for (int d= 0; d< max_demand; d++){
+              // decode idCurrent into idState
+                int idSum= 0, index= idCurrent;
+                for (int l = L - 1; l >= 0; l--) {
+                   idState[l] = index % K;
+                   idSum += idState[l];
+                   index /= K;
+                }
+                idState[L] = 0;
+              //deplete i units from idState
+                for (int l = 0; l < L; l++) {
+                   if (i <= idState[l]) {
+                     idState[l] -= i;
+                     break;
+                   } else {
+                       i -= idState[l];
+                       idState[l] = 0;
+                     }
+                }
+              //holding cost incurred
+               int hold = idSum - i;
+              //order j units
+               idState[L]= j;
+              //sell d units from idState
+               int sell = 0;
+               for (int l = 0; l < L+ 1; l++) {
+                  if (d <= idState[l]) {
+                      sell += d;
+                      idState[l] -= d;
+                      break;
+                  } else {
+                      i -= idState[l];
+                      sell += idState[l];
+                      idState[l] = 0;
+                    }
+               }
+            //dispose expired terms
+               int dispose = idState[0];
+               idState[0]= 0;
+            //get the index of the future state
+               int future = 0;
+               for (int l = 1; l < L + 1; l++) {
+                  future *= K;
+                  future += idState[l];
+               }
+            //get the value with respect to i,j, d
+               float state_value_sample = salvageValue* i- holdingCost* hold- discountRate* (orderCost* j+ price* sell- disposalCost* dispose+ inVector[future]);
+               state_value += state_value_sample* distribution[d];
+          }
+          if (state_value > opt_value + 1e-6){
+              opt_value= state_value;
+              opt_deplete= i;
+              opt_order= j;
+          }
+        }
+    }
+    
+    outVector[idCurrent] = opt_value;
+    deplete[idCurrent]= opt_deplete;
+    order[idCurrent]= opt_order;
 
 }
 
