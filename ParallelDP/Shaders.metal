@@ -138,7 +138,7 @@ kernel void iterate(const device uint *batch[[buffer(4)]],
         }
     }
     
-    outVector[idCurrent] = opt_value;
+    outVector[idCurrent] = opt_value; 
     deplete[idCurrent] = float(opt_deplete);
     order[idCurrent] = float(opt_order);
     
