@@ -21,14 +21,18 @@ let holdingCost: Float = 1.11
 let orderCost: Float = 5
 let disposalCost: Float = 1
 let discountRate: Float = 0.95
-let price: Float = 100
-let max_demand: Float = 1.0
+let price: Float = 10
+
 
 // hardcoded to the following number
 // Need to understand more about threadExecutionWidth for optimal config
 let threadExecutionWidth = 128
 
 // parameters needs to be transmitted to device
+let distributionVector: [Float] = [
+    0.5, 0.5
+]
+let max_demand: Float = Float(distributionVector.count)
 // The order matters
 let paramemterVector: [Float] = [
     Float(K),
@@ -41,9 +45,7 @@ let paramemterVector: [Float] = [
     price,
     max_demand
 ]
-let distributionVector: [Float] = [
-    19, 0
-]
+
 
 // basic calcuation of buffer
 let numberOfStates = Int(pow(Double(K), Double(L)))
