@@ -3,27 +3,57 @@
 <plist version="1.0">
 <dict>
 	<key>Capacity</key>
-	<integer>8</integer>
+	<integer>9</integer>
 	<key>Dimension</key>
-	<integer>6</integer>
+	<integer>8</integer>
 	<key>Periods</key>
 	<integer>1</integer>
 	<key>HoldingCost</key>
 	<real>1.5</real>
+	<key>SalvageValue</key>
+	<real>1</real>
+	<key>OrderCost</key>
+	<real>5</real>
+	<key>DisposalCost</key>
+	<integer>1</integer>
+	<key>DiscountRate</key>
+	<integer>1</integer>
+	<key>Price</key>
+	<integer>10</integer>
 	<key>Distribution</key>
 	<array>
 		<real>2.06115362e-09</real>
 		<real>4.12230724e-08</real>
-		<real>4.12230724e-08</real>
-		<real>2.06115362e-09</real>
-		<real>4.12230724e-08</real>
-		<real>4.12230724e-08</real>
-		<real>2.06115362e-09</real>
-		<real>4.12230724e-08</real>
-		<real>4.12230724e-08</real>
-		<real>2.06115362e-09</real>
-		<real>4.12230724e-08</real>
-		<real>4.12230724e-08</real>
+		<real>4.12230724e-07</real>
+		<real>2.74820483e-06</real>
+		<real>1.37410241e-05</real>
+		<real>5.49640966e-05</real>
+		<real>0.000183213655</real>
+		<real>0.000523467587</real>
+		<real>0.00130866897</real>
+		<real>0.00290815326</real>
+		<real>0.00581630652</real>
+		<real>0.0105751028</real>
+		<real>0.0176251713</real>
+		<real>0.0271156481</real>
+		<real>0.0387366401</real>
+		<real>0.0516488535</real>
+		<real>0.06456106690000001</real>
+		<real>0.07595419639999999</real>
+		<real>0.0843935515</real>
+		<real>0.0888353174</real>
+		<real>0.0888353174</real>
+		<real>0.0846050642</real>
+		<real>0.07691369469999999</real>
+		<real>0.0668814737</real>
+		<real>0.0557345614</real>
+		<real>0.0445876491</real>
+		<real>0.0342981916</real>
+		<real>0.0254060679</real>
+		<real>0.0181471913</real>
+		<real>0.0125153044</real>
+		<real>0.00834353625</real>
+		<real>0.00538292661</real>
 	</array>
 </dict>
 </plist>

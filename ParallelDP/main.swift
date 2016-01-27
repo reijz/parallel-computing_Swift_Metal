@@ -10,7 +10,7 @@ import Foundation
 import MetalKit
 
 // Reading paremeters from plist
-let plistPath = "/Users/jz/Developer/ParallelDP/ParallelDP/parameters.plist"
+let plistPath = "/Users/zhanghailun/ParallelDP/ParallelDP/parameters.plist"
 
 let fileManager = NSFileManager.defaultManager()
 if !fileManager.fileExistsAtPath(plistPath) {
@@ -26,44 +26,19 @@ let numPeriods: Int! = dict!.valueForKey("Periods") as? Int
 let L: Int! = dict!.valueForKey("Dimension") as? Int
 let K: Int! = dict!.valueForKey("Capacity") as? Int
 let holdingCost: Float! = dict!.valueForKey("HoldingCost") as? Float
+let salvageValue: Float! = dict!.valueForKey("SalvageValue") as? Float
+let orderCost: Float! = dict!.valueForKey("OrderCost") as? Float
+let disposalCost: Float! = dict!.valueForKey("DisposalCost") as? Float
+let discountRate: Float! = dict!.valueForKey("DiscountRate") as? Float
+let price: Float! = dict!.valueForKey("Price") as? Float
 let dist: [Float]! = dict!.valueForKey("Distribution") as? [Float]
 
 print(numPeriods, L, dist)
 
-
-
-
-
-
-
-
-let salvageValue: Float = 1.0
-
-let orderCost: Float = 5
-let disposalCost: Float = 1
-let discountRate: Float = 1
-let price: Float = 10
-
-
 // hardcoded to the following number
 // Need to understand more about threadExecutionWidth for optimal config
 let threadExecutionWidth = 128
-
-// parameters needs to be transmitted to device
-let distributionVector: [Float] = [
-    2.06115362e-09,   4.12230724e-08,   4.12230724e-07,
-    2.74820483e-06,   1.37410241e-05,   5.49640966e-05,
-    1.83213655e-04,   5.23467587e-04,   1.30866897e-03,
-    2.90815326e-03,   5.81630652e-03,   1.05751028e-02,
-    1.76251713e-02,   2.71156481e-02,   3.87366401e-02,
-    5.16488535e-02,   6.45610669e-02,   7.59541964e-02,
-    8.43935515e-02,   8.88353174e-02,   8.88353174e-02,
-    8.46050642e-02,   7.69136947e-02,   6.68814737e-02,
-    5.57345614e-02,   4.45876491e-02,   3.42981916e-02,
-    2.54060679e-02,   1.81471913e-02,   1.25153044e-02,
-    8.34353625e-03,   5.38292661e-03
-]
-let max_demand: Float = Float(distributionVector.count)
+let max_demand: Float = Float(dist.count)
 // The order matters
 let paramemterVector: [Float] = [
     Float(K),
@@ -115,7 +90,7 @@ var buffer:[MTLBuffer] = [
 ]
 var parameterBuffer:MTLBuffer = device.newBufferWithBytes(paramemterVector, length: unitSize*paramemterVector.count, options: resourceOption)
 // put distriburion buffer here
-var distributionBuffer:MTLBuffer = device.newBufferWithBytes(distributionVector, length: unitSize*distributionVector.count, options: resourceOption)
+var distributionBuffer:MTLBuffer = device.newBufferWithBytes(dist, length: unitSize*dist.count, options: resourceOption)
 
 // Get functions from Shaders and add to MTL library
 var defaultLibrary: MTLLibrary! = device.newDefaultLibrary()
