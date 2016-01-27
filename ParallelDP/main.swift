@@ -10,10 +10,10 @@ import Foundation
 import MetalKit
 
 // parameter only needed by the host
-let numPeriods = 2  // periods
+let numPeriods = 1 // periods
 // parameters needed by both the host and the device
 let K = 4  // capacity
-let L = 4 // dimension
+let L = 3 // dimension
 
 
 let salvageValue: Float = 1.5
@@ -173,6 +173,6 @@ var data = NSData(bytesNoCopy: buffer[numPeriods%2].contents(), length: resultBu
 var finalResultArray = [Float](count: numberOfStates, repeatedValue: 0)
 data.getBytes(&finalResultArray, length:resultBufferSize)
 
-print(finalResultArray[numberOfStates-20..<numberOfStates])
+print(finalResultArray[0..<numberOfStates])
 
 

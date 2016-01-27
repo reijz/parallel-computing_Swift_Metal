@@ -38,7 +38,7 @@ kernel void iterate(const device uint *batch[[buffer(4)]],
                     uint id [[ thread_position_in_grid ]]) {
     
     // get the parameters
-    int K= parameters[0], L= parameters[1];
+    int K= int(parameters[0]), L= int(parameters[1]);
     int max_demand= int(parameters[8]);
     float salvageValue= parameters[2];
     float holdingCost= parameters[3];
@@ -61,9 +61,9 @@ kernel void iterate(const device uint *batch[[buffer(4)]],
     if (idCurrent != 0){
         min_deplete = int(deplete[idParent]) + int(deplete[idParent] != 0.);
         max_deplete = int(deplete[idParent]) + 2;
-//        int min_order_1 = int(order[idParent]) + int(deplete[idParent] != 0.) - 1;
-//        min_order = min_order_1 * int(min_order_1 >= 0.);
-//        max_order = order[idParent] + 1;
+        int min_order_1 = int(order[idParent]) + int(deplete[idParent] != 0.) - 1;
+        min_order = min_order_1 * int(min_order_1 >= 0.);
+        max_order = int(order[idParent]) + 1;
     }
     
     int opt_deplete = 0;
@@ -120,18 +120,19 @@ kernel void iterate(const device uint *batch[[buffer(4)]],
                 //get the value with respect to i,j, d
                 float state_value_sample = salvageValue* i- holdingCost* hold- discountRate* (orderCost* j+ price* sell- disposalCost* dispose+ inVector[future]);
                 state_value += state_value_sample* distribution[d];
-            }
-            if (state_value > opt_value + 1e-6){
-                opt_value = state_value;
-                opt_deplete = i;
-                opt_order = j;
+                opt_value += state_value;
+//            }
+//            if (state_value > opt_value + 1e-6){
+//                opt_value = state_value;
+//                opt_deplete = i;
+//                opt_order = j;
             }
         }
     }
     
-    outVector[idCurrent] = opt_value;
-    deplete[idCurrent]= opt_deplete;
-    order[idCurrent]= opt_order;
+    outVector[idCurrent] = opt_value+ deplete[idCurrent];
+//    deplete[idCurrent]= opt_deplete;
+//    order[idCurrent]= opt_order;
 
 }
 
