@@ -158,7 +158,6 @@ for t in 0..<numPeriods {
             encoderIterateDP.setBuffer(parameterBuffer, offset: 0, atIndex: 5)
             encoderIterateDP.setBuffer(distributionBuffer, offset: 0, atIndex: 6)
 
-            
             encoderIterateDP.dispatchThreadgroups(numGroupsBatch, threadsPerThreadgroup: numThreadsPerGroup)
             encoderIterateDP.endEncoding()
             commandBufferIterateDP.commit()
