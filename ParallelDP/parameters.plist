@@ -2,12 +2,14 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>ThreadExecutionWidth</key>
+	<integer>128</integer>
 	<key>Capacity</key>
 	<integer>9</integer>
 	<key>Dimension</key>
 	<integer>8</integer>
 	<key>Periods</key>
-	<integer>1</integer>
+	<integer>2</integer>
 	<key>HoldingCost</key>
 	<real>1.5</real>
 	<key>SalvageValue</key>

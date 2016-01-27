@@ -10,7 +10,9 @@ import Foundation
 import MetalKit
 
 // Reading paremeters from plist
-let plistPath = "/Users/zhanghailun/ParallelDP/ParallelDP/parameters.plist"
+// let plistPath = "/Users/zhanghailun/ParallelDP/ParallelDP/parameters.plist"
+
+let plistPath = "/Users/jz/Developer/ParallelDP/ParallelDP/parameters.plist"
 
 let fileManager = NSFileManager.defaultManager()
 if !fileManager.fileExistsAtPath(plistPath) {
@@ -32,12 +34,12 @@ let disposalCost: Float! = dict!.valueForKey("DisposalCost") as? Float
 let discountRate: Float! = dict!.valueForKey("DiscountRate") as? Float
 let price: Float! = dict!.valueForKey("Price") as? Float
 let dist: [Float]! = dict!.valueForKey("Distribution") as? [Float]
+// hardcoded to the following number
+// Need to understand more about threadExecutionWidth for optimal config
+let threadExecutionWidth: Int! = dict!.valueForKey("ThreadExecutionWidth") as? Int
 
 print(numPeriods, L, dist)
 
-// hardcoded to the following number
-// Need to understand more about threadExecutionWidth for optimal config
-let threadExecutionWidth = 128
 let max_demand: Float = Float(dist.count)
 // The order matters
 let paramemterVector: [Float] = [
@@ -51,7 +53,6 @@ let paramemterVector: [Float] = [
     price,
     max_demand
 ]
-
 
 // basic calcuation of buffer
 let numberOfStates = Int(pow(Double(K), Double(L)))
@@ -190,7 +191,7 @@ var finalResultArray2 = [Float](count: numberOfStates, repeatedValue: 0)
 data2.getBytes(&finalResultArray2, length:resultBufferSize)
 
 var end = clock()
-print("the time elapsed is ", Float(end - start)/Float(CLOCKS_PER_SEC))
+print("the time elapsed is ", Double(end - start)/Double(CLOCKS_PER_SEC))
 print(finalResultArray[numberOfStates-10..<numberOfStates])
 print(finalResultArray1[numberOfStates-10..<numberOfStates])
 print(finalResultArray2[numberOfStates-10..<numberOfStates])
