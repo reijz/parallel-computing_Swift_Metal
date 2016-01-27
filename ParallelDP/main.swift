@@ -9,15 +9,36 @@
 import Foundation
 import MetalKit
 
-// parameter only needed by the host
-let numPeriods = 100// periods
-// parameters needed by both the host and the device
-let K = 32  // capacity
-let L = 3 // dimension
+// Reading paremeters from plist
+let plistPath = "/Users/jz/Developer/ParallelDP/ParallelDP/parameters.plist"
+
+let fileManager = NSFileManager.defaultManager()
+if !fileManager.fileExistsAtPath(plistPath) {
+    print("check path of plist file!")
+    exit(1)
+}
+
+let dict = NSDictionary(contentsOfFile: plistPath)
+
+// print(dict)
+
+let numPeriods: Int! = dict!.valueForKey("Periods") as? Int
+let L: Int! = dict!.valueForKey("Dimension") as? Int
+let K: Int! = dict!.valueForKey("Capacity") as? Int
+let holdingCost: Float! = dict!.valueForKey("HoldingCost") as? Float
+let dist: [Float]! = dict!.valueForKey("Distribution") as? [Float]
+
+print(numPeriods, L, dist)
+
+
+
+
+
+
 
 
 let salvageValue: Float = 1.0
-let holdingCost: Float = 0.5
+
 let orderCost: Float = 5
 let disposalCost: Float = 1
 let discountRate: Float = 1

@@ -10,7 +10,9 @@
 using namespace metal;
 
 // max dimension
-__constant int max_dimension = 13;
+// __constant int max_dimension = 13;
+
+#define max_dimension 13
 
 kernel void initialize(const device uint *batch[[buffer(1)]],
                        const device float *parameters[[buffer(2)]],
