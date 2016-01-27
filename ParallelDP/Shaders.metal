@@ -55,21 +55,22 @@ kernel void iterate(const device uint *batch[[buffer(4)]],
     int idState[max_dimension + 1];
     
     // range of optimization
-    int min_deplete = 0, max_deplete = 3;
+    int min_deplete = 0, max_deplete = 1;
     int min_order = 0, max_order = K;
 
-//    if (idCurrent != 0){
-//        min_deplete = int(deplete[idParent]) + int(deplete[idParent] != 0.);
-//        max_deplete = int(deplete[idParent]) + 2;
-//        int min_order_1 = int(order[idParent]) + int(deplete[idParent] != 0.) - 1;
-//        min_order = min_order_1 * int(min_order_1 >= 0.);
-//        max_order = int(order[idParent]) + 1;
-//    }
+    if (idCurrent != 0){
+        min_deplete = int(deplete[idParent]) + int(deplete[idParent] != 0.);
+        max_deplete = int(deplete[idParent]) + 2;
+        int min_order_1 = int(order[idParent]) + int(deplete[idParent] != 0.) - 1;
+        min_order = min_order_1 * int(min_order_1 >= 0);
+        max_order = int(order[idParent]) + 1;
+    }
     
     int opt_deplete = 0;
     int opt_order = 0;
     float opt_value = 0.;
     float state_value = 0.;
+    
     
     for (int i = min_deplete; i < max_deplete; i++){
         for (int j = min_order; j < max_order; j++){
@@ -99,14 +100,14 @@ kernel void iterate(const device uint *batch[[buffer(4)]],
                 //order j units
                 idState[L]= j;
                 //sell d units from idState
-                int sell = 0;
+                int sell = 0, remain_sell = d;
                 for (int l = 0; l < L+ 1; l++) {
-                    if (d <= idState[l]) {
-                        sell += d;
-                        idState[l] -= d;
+                    if (remain_sell <= idState[l]) {
+                        sell += remain_sell;
+                        idState[l] -= remain_sell;
                         break;
                     } else {
-                        i -= idState[l];
+                        remain_sell -= idState[l];
                         sell += idState[l];
                         idState[l] = 0;
                     }
@@ -121,8 +122,8 @@ kernel void iterate(const device uint *batch[[buffer(4)]],
                     future += idState[l];
                 }
                 //get the value with respect to i,j, d
-                float state_value_sample = salvageValue* i- holdingCost* hold- discountRate* (orderCost* j+ price* sell- disposalCost* dispose+ inVector[future]);
-                state_value += state_value_sample* distribution[d];
+                float state_value_sample = salvageValue* i- holdingCost* hold+ discountRate* (-orderCost* j+ price* sell- disposalCost* dispose+ inVector[future]);
+                state_value += (state_value_sample * distribution[d+1]);
             }
             if (state_value > opt_value + 1e-6){
                 opt_value = state_value;
@@ -132,10 +133,10 @@ kernel void iterate(const device uint *batch[[buffer(4)]],
         }
     }
     
-    outVector[idCurrent] = opt_value+ deplete[idCurrent];
-//    deplete[idCurrent] = float(opt_deplete);
-//    order[idCurrent] = float(opt_order);
-
+    outVector[idCurrent] = opt_value;
+    deplete[idCurrent] = float(opt_deplete);
+    order[idCurrent] = float(opt_order);
+    
 }
 
 

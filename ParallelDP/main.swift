@@ -10,18 +10,18 @@ import Foundation
 import MetalKit
 
 // parameter only needed by the host
-let numPeriods = 1 // periods
+let numPeriods = 1// periods
 // parameters needed by both the host and the device
 let K = 4  // capacity
 let L = 3 // dimension
 
 
-let salvageValue: Float = 1.5
+let salvageValue: Float = 1.0
 let holdingCost: Float = 1.11
-let orderCost: Float = 1
+let orderCost: Float = 5
 let disposalCost: Float = 1
 let discountRate: Float = 0.95
-let price: Float = 10
+let price: Float = 100
 let max_demand: Float = 1.0
 
 // hardcoded to the following number
@@ -42,7 +42,7 @@ let paramemterVector: [Float] = [
     max_demand
 ]
 let distributionVector: [Float] = [
-    1.0
+    19, 0
 ]
 
 // basic calcuation of buffer
@@ -172,6 +172,17 @@ var data = NSData(bytesNoCopy: buffer[numPeriods%2].contents(), length: resultBu
 var finalResultArray = [Float](count: numberOfStates, repeatedValue: 0)
 data.getBytes(&finalResultArray, length:resultBufferSize)
 
+var data1 = NSData(bytesNoCopy: buffer[2].contents(), length: resultBufferSize, freeWhenDone: false)
+var finalResultArray1 = [Float](count: numberOfStates, repeatedValue: 0)
+data1.getBytes(&finalResultArray1, length:resultBufferSize)
+
+var data2 = NSData(bytesNoCopy: buffer[3].contents(), length: resultBufferSize, freeWhenDone: false)
+var finalResultArray2 = [Float](count: numberOfStates, repeatedValue: 0)
+data2.getBytes(&finalResultArray2, length:resultBufferSize)
+
 print(finalResultArray[0..<numberOfStates])
+print(finalResultArray1[0..<numberOfStates])
+print(finalResultArray2[0..<numberOfStates])
+
 
 
