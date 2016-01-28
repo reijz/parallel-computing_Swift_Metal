@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>ThreadExecutionWidth</key>
-	<integer>513</integer>
+	<integer>2048</integer>
 	<key>Capacity</key>
 	<integer>9</integer>
 	<key>Dimension</key>

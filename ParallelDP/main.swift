@@ -72,18 +72,18 @@ let numThreadsPerGroup = MTLSize(width:threadExecutionWidth,height:1,depth:1)
 // Initialize Metal
 // Get the default device, which is the same as the one monitor is using
 var device: MTLDevice! = MTLCreateSystemDefaultDevice()
-//// In the following, choose the device NOT used by monitor
-//let devices: [MTLDevice] = MTLCopyAllDevices()
-//for metalDevice: MTLDevice in devices {
-//    if metalDevice.headless == true {
-//        device = metalDevice
-//    }
-//}
-//// exit with an error message if all devices are used by monitor
-//if !device.headless {
-//    print("no dedicated device found")
-//    exit(1)
-//}
+// In the following, choose the device NOT used by monitor
+let devices: [MTLDevice] = MTLCopyAllDevices()
+for metalDevice: MTLDevice in devices {
+    if metalDevice.headless == true {
+        device = metalDevice
+    }
+}
+// exit with an error message if all devices are used by monitor
+if !device.headless {
+    print("no dedicated device found")
+    exit(1)
+}
 
 // Build command queue
 var commandQueue: MTLCommandQueue! = device.newCommandQueue()
