@@ -107,7 +107,7 @@ let pipelineFilterInit = try device.newComputePipelineStateWithFunction(initDP!)
 let iterateDP = DPLibrary.newFunctionWithName("iterate")
 let pipelineFilterIterate = try device.newComputePipelineStateWithFunction(iterateDP!)
 
-var start = clock()
+var start = NSDate()
 // Initialize
 for l: Int in 1...L {
 
@@ -117,7 +117,7 @@ for l: Int in 1...L {
     
     for batchIndex: uint in 1..<uint(K) {
         
-        print("Batch Size = ", batchSize, "batchIndex = ", batchIndex)
+        //print("Batch Size = ", batchSize, "batchIndex = ", batchIndex)
 
         let dispatchIterator: [uint] = [batchSize, batchIndex]
         var dispatchBuffer:MTLBuffer = device.newBufferWithBytes(dispatchIterator, length: sizeof(uint)*dispatchIterator.count, options: resourceOption)
@@ -157,7 +157,7 @@ for t in 0..<numPeriods {
 
         for batchIndex: uint in batchStart..<batchNum {
 
-            print("Iterate Batch Size = ", batchSize, "batchIndex = ", batchIndex)
+            //print("Iterate Batch Size = ", batchSize, "batchIndex = ", batchIndex)
             
             let dispatchIterator: [uint] = [batchSize, batchIndex]
             var dispatchBuffer:MTLBuffer = device.newBufferWithBytes(dispatchIterator, length: sizeof(uint)*dispatchIterator.count, options: resourceOption)
@@ -197,8 +197,9 @@ var data2 = NSData(bytesNoCopy: buffer[3].contents(), length: resultBufferSize, 
 var finalResultArray2 = [Float](count: numberOfStates, repeatedValue: 0)
 data2.getBytes(&finalResultArray2, length:resultBufferSize)
 
-var end = clock()
-print("the time elapsed is ", Double(end - start)/Double(CLOCKS_PER_SEC))
+var end = NSDate()
+print("the time elapsed is ", Double(end.timeIntervalSinceDate(start)))
+print(finalResultArray[0..<10])
 print(finalResultArray[numberOfStates-10..<numberOfStates])
 print(finalResultArray1[numberOfStates-10..<numberOfStates])
 print(finalResultArray2[numberOfStates-10..<numberOfStates])
