@@ -9,21 +9,28 @@
 import Foundation
 import MetalKit
 
+let fileManager = NSFileManager.defaultManager()
 // Reading paremeters from plist
 // let plistPath = "/Users/zhanghailun/ParallelDP/ParallelDP/parameters.plist"
+// let plistPath = "/Users/jz/Developer/ParallelDP/ParallelDP/parameters.plist"
 
-let plistPath = "/Users/jz/Developer/ParallelDP/ParallelDP/parameters.plist"
-
-let fileManager = NSFileManager.defaultManager()
+// Alternatively, specify the plist file while running
+let path = fileManager.currentDirectoryPath
+let args = Process.arguments
+if (args.count != 2) {
+    print("Please specify the plist file for paremeters!")
+    exit(1)
+}
+let plistPath = path + "/" + args[1]
+print(plistPath)
 if !fileManager.fileExistsAtPath(plistPath) {
-    print("check path of plist file!")
+    print("Cannot find plist file!")
     exit(1)
 }
 
+// Reading paremeters from plist
 let dict = NSDictionary(contentsOfFile: plistPath)
-
 // print(dict)
-
 let numPeriods: Int! = dict!.valueForKey("Periods") as? Int
 let L: Int! = dict!.valueForKey("Dimension") as? Int
 let K: Int! = dict!.valueForKey("Capacity") as? Int
@@ -38,7 +45,7 @@ let dist: [Float]! = dict!.valueForKey("Distribution") as? [Float]
 // Need to understand more about threadExecutionWidth for optimal config
 let threadExecutionWidth: Int! = dict!.valueForKey("ThreadExecutionWidth") as? Int
 
-print(numPeriods, L, dist)
+print("The complexity is with Capacity", K,"and Dimension", L)
 
 let max_demand: Float = Float(dist.count)
 // The order matters
@@ -94,10 +101,10 @@ var parameterBuffer:MTLBuffer = device.newBufferWithBytes(paramemterVector, leng
 var distributionBuffer:MTLBuffer = device.newBufferWithBytes(dist, length: unitSize*dist.count, options: resourceOption)
 
 // Get functions from Shaders and add to MTL library
-var defaultLibrary: MTLLibrary! = device.newDefaultLibrary()
-let initDP = defaultLibrary.newFunctionWithName("initialize")
+var DPLibrary: MTLLibrary! = device.newDefaultLibrary()
+let initDP = DPLibrary.newFunctionWithName("initialize")
 let pipelineFilterInit = try device.newComputePipelineStateWithFunction(initDP!)
-let iterateDP = defaultLibrary.newFunctionWithName("iterate")
+let iterateDP = DPLibrary.newFunctionWithName("iterate")
 let pipelineFilterIterate = try device.newComputePipelineStateWithFunction(iterateDP!)
 
 var start = clock()

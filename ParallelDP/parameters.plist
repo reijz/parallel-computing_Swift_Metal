@@ -5,9 +5,9 @@
 	<key>ThreadExecutionWidth</key>
 	<integer>128</integer>
 	<key>Capacity</key>
-	<integer>9</integer>
+	<integer>5</integer>
 	<key>Dimension</key>
-	<integer>8</integer>
+	<integer>4</integer>
 	<key>Periods</key>
 	<integer>2</integer>
 	<key>HoldingCost</key>
