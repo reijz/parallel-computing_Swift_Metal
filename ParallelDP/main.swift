@@ -112,7 +112,8 @@ let iterateDP = DPLibrary.newFunctionWithName("iterate")
 let pipelineFilterIterate = try device.newComputePipelineStateWithFunction(iterateDP!)
 let iterateFluid = DPLibrary.newFunctionWithName("iterate_fluid")
 let pipelineFilterIterate_fluid = try device.newComputePipelineStateWithFunction(iterateFluid!)
-
+let iterateNVP = DPLibrary.newFunctionWithName("iterate_NVP")
+let pipelineFilterIterate_NVP = try device.newComputePipelineStateWithFunction(iterateNVP!)
 
 var start = NSDate()
 // Initialize
@@ -172,7 +173,7 @@ for t in 0..<numPeriods {
             var commandBufferIterateDP: MTLCommandBuffer! = commandQueue.commandBuffer()
             var encoderIterateDP = commandBufferIterateDP.computeCommandEncoder()
             
-            encoderIterateDP.setComputePipelineState(pipelineFilterIterate_fluid)
+            encoderIterateDP.setComputePipelineState(pipelineFilterIterate_NVP)
             
             encoderIterateDP.setBuffer(buffer[t%2], offset: 0, atIndex: 0)
             encoderIterateDP.setBuffer(buffer[(t+1)%2], offset: 0, atIndex: 1)

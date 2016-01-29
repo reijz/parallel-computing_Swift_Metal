@@ -11,7 +11,7 @@
 	<key>Mean_demand</key>
 	<integer>20</integer>
 	<key>Periods</key>
-	<integer>2</integer>
+	<integer>10</integer>
 	<key>HoldingCost</key>
 	<real>1.5</real>
 	<key>SalvageValue</key>
