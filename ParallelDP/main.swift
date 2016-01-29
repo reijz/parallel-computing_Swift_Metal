@@ -11,18 +11,19 @@ import MetalKit
 
 let fileManager = NSFileManager.defaultManager()
 // Reading paremeters from plist
-// let plistPath = "/Users/zhanghailun/ParallelDP/ParallelDP/parameters.plist"
+ let plistPath = "/Users/zhanghailun/ParallelDP/ParallelDP/parameters.plist"
 // let plistPath = "/Users/jz/Developer/ParallelDP/ParallelDP/parameters.plist"
 
 // Alternatively, specify the plist file while running
-let path = fileManager.currentDirectoryPath
-let args = Process.arguments
-if (args.count != 2) {
-    print("Please specify the plist file for paremeters!")
-    exit(1)
-}
-let plistPath = path + "/" + args[1]
-print(plistPath)
+//let path = fileManager.currentDirectoryPath
+//let args = Process.arguments
+//if (args.count != 2) {
+//    print("Please specify the plist file for paremeters!")
+//    exit(1)
+//}
+//let plistPath = path + "/" + args[1]
+//print(plistPath)
+
 if !fileManager.fileExistsAtPath(plistPath) {
     print("Cannot find plist file!")
     exit(1)
@@ -32,6 +33,7 @@ if !fileManager.fileExistsAtPath(plistPath) {
 let dict = NSDictionary(contentsOfFile: plistPath)
 // print(dict)
 let numPeriods: Int! = dict!.valueForKey("Periods") as? Int
+let mean_demand: Int! = dict!.valueForKey("Mean_demand") as? Int
 let L: Int! = dict!.valueForKey("Dimension") as? Int
 let K: Int! = dict!.valueForKey("Capacity") as? Int
 let holdingCost: Float! = dict!.valueForKey("HoldingCost") as? Float
@@ -58,7 +60,9 @@ let paramemterVector: [Float] = [
     disposalCost,
     discountRate,
     price,
-    max_demand
+    max_demand,
+    Float(mean_demand),
+    Float(numPeriods)
 ]
 
 // basic calcuation of buffer
@@ -73,17 +77,17 @@ let numThreadsPerGroup = MTLSize(width:threadExecutionWidth,height:1,depth:1)
 // Get the default device, which is the same as the one monitor is using
 var device: MTLDevice! = MTLCreateSystemDefaultDevice()
 // In the following, choose the device NOT used by monitor
-let devices: [MTLDevice] = MTLCopyAllDevices()
-for metalDevice: MTLDevice in devices {
-    if metalDevice.headless == true {
-        device = metalDevice
-    }
-}
-// exit with an error message if all devices are used by monitor
-if !device.headless {
-    print("no dedicated device found")
-    exit(1)
-}
+//let devices: [MTLDevice] = MTLCopyAllDevices()
+//for metalDevice: MTLDevice in devices {
+//    if metalDevice.headless == true {
+//        device = metalDevice
+//    }
+//}
+//// exit with an error message if all devices are used by monitor
+//if !device.headless {
+//    print("no dedicated device found")
+//    exit(1)
+//}
 
 // Build command queue
 var commandQueue: MTLCommandQueue! = device.newCommandQueue()
@@ -106,6 +110,9 @@ let initDP = DPLibrary.newFunctionWithName("initialize")
 let pipelineFilterInit = try device.newComputePipelineStateWithFunction(initDP!)
 let iterateDP = DPLibrary.newFunctionWithName("iterate")
 let pipelineFilterIterate = try device.newComputePipelineStateWithFunction(iterateDP!)
+let iterateFluid = DPLibrary.newFunctionWithName("iterate_fluid")
+let pipelineFilterIterate_fluid = try device.newComputePipelineStateWithFunction(iterateFluid!)
+
 
 var start = NSDate()
 // Initialize
@@ -159,13 +166,13 @@ for t in 0..<numPeriods {
 
             //print("Iterate Batch Size = ", batchSize, "batchIndex = ", batchIndex)
             
-            let dispatchIterator: [uint] = [batchSize, batchIndex]
+            let dispatchIterator: [uint] = [batchSize, batchIndex, uint(t)]
             var dispatchBuffer:MTLBuffer = device.newBufferWithBytes(dispatchIterator, length: sizeof(uint)*dispatchIterator.count, options: resourceOption)
             
             var commandBufferIterateDP: MTLCommandBuffer! = commandQueue.commandBuffer()
             var encoderIterateDP = commandBufferIterateDP.computeCommandEncoder()
             
-            encoderIterateDP.setComputePipelineState(pipelineFilterIterate)
+            encoderIterateDP.setComputePipelineState(pipelineFilterIterate_fluid)
             
             encoderIterateDP.setBuffer(buffer[t%2], offset: 0, atIndex: 0)
             encoderIterateDP.setBuffer(buffer[(t+1)%2], offset: 0, atIndex: 1)
@@ -199,8 +206,10 @@ data2.getBytes(&finalResultArray2, length:resultBufferSize)
 
 var end = NSDate()
 print("the time elapsed is ", Double(end.timeIntervalSinceDate(start)))
-print(finalResultArray[0..<10])
-print(finalResultArray[numberOfStates-10..<numberOfStates])
-print(finalResultArray1[numberOfStates-10..<numberOfStates])
-print(finalResultArray2[numberOfStates-10..<numberOfStates])
+//print(finalResultArray[0..<10])
+//print(finalResultArray1[0..<10])
+//print(finalResultArray2[0..<10])
+print(finalResultArray[numberOfStates - 10..<numberOfStates])
+print(finalResultArray1[numberOfStates - 10..<numberOfStates])
+print(finalResultArray2[numberOfStates - 10..<numberOfStates])
 

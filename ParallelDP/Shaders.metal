@@ -29,7 +29,7 @@ kernel void initialize(const device uint *batch[[buffer(1)]],
     initValue[idCurrent] = initValue[idParent] + salvageValue;
 }
 
-
+// compute the value funciton of the optimal policy
 kernel void iterate(const device uint *batch[[buffer(4)]],
                     const device float *parameters[[buffer(5)]],
                     const device float *distribution[[buffer(6)]],
@@ -145,6 +145,137 @@ kernel void iterate(const device uint *batch[[buffer(4)]],
     order[idCurrent] = float(opt_order);
     
 }
+
+// compute the value function of the fluid policy
+kernel void iterate_fluid(const device uint *batch[[buffer(4)]],
+                    const device float *parameters[[buffer(5)]],
+                    const device float *distribution[[buffer(6)]],
+                    const device float *inVector [[buffer(0)]],
+                    device float *outVector [[ buffer(1) ]],
+                    device float *deplete[[buffer(2)]],
+                    device float *order[[buffer(3)]],
+                    uint id [[ thread_position_in_grid ]]) {
+    
+    // get the parameters
+    int K = int(parameters[0]), L = int(parameters[1]), numPeriods= int(parameters[10]);
+    int max_demand = int(parameters[8]);
+    int mean_demand = int(parameters[9]);
+    float salvageValue = parameters[2];
+    float holdingCost = parameters[3];
+    float orderCost = parameters[4];
+    float disposalCost = parameters[5];
+    float discountRate = parameters[6];
+    float price = parameters[7];
+    
+    int t = batch[2];
+    
+    // find current and parend id
+    uint idCurrent = batch[0]*batch[1]+id;
+    uint idParent = idCurrent - batch[0];
+    
+    // prepare a vector for decode
+    int idState[max_dimension + 1];
+    
+    int idSum= 0, index= idCurrent;
+    for (int l = L - 1; l >= 0; l--) {
+        idState[l] = index % K;
+        idSum += idState[l];
+        index /= K;
+    }
+    idState[L] = 0;
+    
+    int fluid_deplete = 0, fluid_order = 0;
+    // determine the action for a specific state
+    if (t < numPeriods -1) {
+        if (mean_demand - idSum > 1e-6){
+            fluid_order = int(mean_demand - idSum);
+        }
+    }
+    else {
+        int idPartialSum = 0;
+        for (int l = 1; l < L + 1; l++) {
+            idPartialSum += idState[l-1];
+            if (idPartialSum - l* mean_demand > fluid_deplete + 1e-6){
+                fluid_deplete = idPartialSum - l* mean_demand;
+            }
+        }
+        if (mean_demand - fluid_deplete - idSum > 1e-6){
+            fluid_order = int(mean_demand - fluid_deplete - idSum);
+        }
+        
+    }
+    float opt_value = 0, state_value = 0;
+    
+    for (int i = fluid_deplete; i < fluid_deplete + 1; i++){
+        for (int j = fluid_order; j < fluid_order + 1; j++){
+            state_value= 0.;
+            for (int d = 0; d < max_demand; d++){
+                // decode idCurrent into idState
+                int idSum= 0, index= idCurrent;
+                for (int l = L - 1; l >= 0; l--) {
+                    idState[l] = index % K;
+                    idSum += idState[l];
+                    index /= K;
+                }
+                idState[L] = 0;
+                //deplete i units from idState
+                int remain_deplete = i;
+                for (int l = 0; l < L; l++) {
+                    if (remain_deplete <= idState[l]) {
+                        idState[l] -= remain_deplete;
+                        break;
+                    } else {
+                        remain_deplete -= idState[l];
+                        idState[l] = 0;
+                    }
+                }
+                //holding cost incurred
+                int hold = idSum - i;
+                //order j units
+                idState[L]= j;
+                //sell d units from idState
+                int sell = 0, remain_sell = d;
+                for (int l = 0; l < L+ 1; l++) {
+                    if (remain_sell <= idState[l]) {
+                        sell += remain_sell;
+                        idState[l] -= remain_sell;
+                        break;
+                    } else {
+                        remain_sell -= idState[l];
+                        sell += idState[l];
+                        idState[l] = 0;
+                    }
+                }
+                //dispose expired terms
+                int dispose = idState[0];
+                idState[0]= 0;
+                //get the index of the future state
+                int future = 0;
+                for (int l = 1; l < L + 1; l++) {
+                    future *= K;
+                    future += idState[l];
+                }
+                //get the value with respect to i, j, d
+                float state_value_sample = salvageValue * i
+                - holdingCost * hold
+                + discountRate * (-orderCost * j
+                                  + price * sell
+                                  - disposalCost * dispose
+                                  + inVector[future]);
+                state_value += (state_value_sample * distribution[d]);
+            }
+            if (state_value > opt_value + 1e-6){
+                opt_value = state_value;
+            }
+        }
+    }
+    
+    outVector[idCurrent] = opt_value;
+    deplete[idCurrent] = float(fluid_deplete);
+    order[idCurrent] = float(fluid_order);
+    
+}
+
 
 
 // to test the understanding of thread related concepts

@@ -3,13 +3,15 @@
 <plist version="1.0">
 <dict>
 	<key>ThreadExecutionWidth</key>
-	<integer>2048</integer>
+	<integer>512</integer>
 	<key>Capacity</key>
-	<integer>9</integer>
+	<integer>30</integer>
 	<key>Dimension</key>
-	<integer>8</integer>
+	<integer>3</integer>
+	<key>Mean_demand</key>
+	<integer>20</integer>
 	<key>Periods</key>
-	<integer>5</integer>
+	<integer>2</integer>
 	<key>HoldingCost</key>
 	<real>1.5</real>
 	<key>SalvageValue</key>
