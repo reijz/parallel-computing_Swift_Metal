@@ -5,13 +5,15 @@
 	<key>ThreadExecutionWidth</key>
 	<integer>512</integer>
 	<key>Capacity</key>
-	<integer>30</integer>
+	<integer>24</integer>
 	<key>Dimension</key>
-	<integer>3</integer>
+	<integer>4</integer>
 	<key>Mean_demand</key>
 	<integer>20</integer>
+	<key>Deplete_threshold</key>
+	<integer>20</integer>
 	<key>Periods</key>
-	<integer>10</integer>
+	<integer>20</integer>
 	<key>HoldingCost</key>
 	<real>1.5</real>
 	<key>SalvageValue</key>

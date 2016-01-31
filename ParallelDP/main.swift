@@ -34,6 +34,7 @@ let dict = NSDictionary(contentsOfFile: plistPath)
 // print(dict)
 let numPeriods: Int! = dict!.valueForKey("Periods") as? Int
 let mean_demand: Int! = dict!.valueForKey("Mean_demand") as? Int
+let deplete_threshold: Int! = dict!.valueForKey("Deplete_threshold") as? Int
 let L: Int! = dict!.valueForKey("Dimension") as? Int
 let K: Int! = dict!.valueForKey("Capacity") as? Int
 let holdingCost: Float! = dict!.valueForKey("HoldingCost") as? Float
@@ -62,7 +63,8 @@ let paramemterVector: [Float] = [
     price,
     max_demand,
     Float(mean_demand),
-    Float(numPeriods)
+    Float(numPeriods),
+    Float(deplete_threshold)
 ]
 
 // basic calcuation of buffer
@@ -114,6 +116,8 @@ let iterateFluid = DPLibrary.newFunctionWithName("iterate_fluid")
 let pipelineFilterIterate_fluid = try device.newComputePipelineStateWithFunction(iterateFluid!)
 let iterateNVP = DPLibrary.newFunctionWithName("iterate_NVP")
 let pipelineFilterIterate_NVP = try device.newComputePipelineStateWithFunction(iterateNVP!)
+let iterateNVP_1 = DPLibrary.newFunctionWithName("iterate_NVP_1")
+let pipelineFilterIterate_NVP_1 = try device.newComputePipelineStateWithFunction(iterateNVP_1!)
 
 var start = NSDate()
 // Initialize
@@ -173,7 +177,7 @@ for t in 0..<numPeriods {
             var commandBufferIterateDP: MTLCommandBuffer! = commandQueue.commandBuffer()
             var encoderIterateDP = commandBufferIterateDP.computeCommandEncoder()
             
-            encoderIterateDP.setComputePipelineState(pipelineFilterIterate_NVP)
+            encoderIterateDP.setComputePipelineState(pipelineFilterIterate_NVP_1)
             
             encoderIterateDP.setBuffer(buffer[t%2], offset: 0, atIndex: 0)
             encoderIterateDP.setBuffer(buffer[(t+1)%2], offset: 0, atIndex: 1)

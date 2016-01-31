@@ -20,13 +20,17 @@ kernel void initialize(const device uint *batch[[buffer(1)]],
                        uint id [[ thread_position_in_grid ]]) {
 
     // get the parameters
+//    float discountRate = parameters[6];
+//    float orderCost = parameters[4];
+//    float holdingCost = parameters[3];
     float salvageValue = parameters[2];
-    
+
+
     // find current and parend id
     uint idCurrent = batch[0]*batch[1]+id;
     uint idParent = idCurrent - batch[0];
     
-    initValue[idCurrent] = initValue[idParent] + salvageValue;
+    initValue[idCurrent] = initValue[idParent] + salvageValue; // discountRate * orderCost - holdingCost;
 }
 
 // compute the value funciton of the optimal policy
@@ -317,11 +321,14 @@ kernel void iterate_NVP(const device uint *batch[[buffer(4)]],
     int min_deplete = 0, max_deplete = 1;
     int min_order = 0, max_order = K;
     
-    if (t < numPeriods - L) {
+    if (t < numPeriods- 1) {
         if (K-1 - idSum > 1e-6){
             min_order = int(K-1 - idSum);
             max_order = int(K-1 - idSum) + 1;
         }
+//        min_order = order[idParent] - 1;
+//        min_order = min_order * int(min_order >= 0);
+//        max_order = min_order + 1;
     }
     else {
         if (idCurrent != 0){
@@ -410,6 +417,125 @@ kernel void iterate_NVP(const device uint *batch[[buffer(4)]],
     
 }
 
+// compute the value function of the NVP_variant policy
+kernel void iterate_NVP_1(const device uint *batch[[buffer(4)]],
+                          const device float *parameters[[buffer(5)]],
+                          const device float *distribution[[buffer(6)]],
+                          const device float *inVector [[buffer(0)]],
+                          device float *outVector [[ buffer(1) ]],
+                          device float *deplete[[buffer(2)]],
+                          device float *order[[buffer(3)]],
+                          uint id [[ thread_position_in_grid ]]) {
+    
+    // get the parameters
+    int K = int(parameters[0]), L = int(parameters[1]), numPeriods= int(parameters[10]);
+    int max_demand = int(parameters[8]);
+    int mean_demand = int(parameters[9]);
+    float salvageValue = parameters[2];
+    float holdingCost = parameters[3];
+    float orderCost = parameters[4];
+    float disposalCost = parameters[5];
+    float discountRate = parameters[6];
+    float price = parameters[7];
+    
+    int deplete_down_to = int(parameters[11]);
+    
+    // find current and parend id
+    uint idCurrent = batch[0]*batch[1]+id;
+    uint idParent = idCurrent - batch[0];
+    
+    // prepare a vector for decode
+    int idState[max_dimension + 1];
+    
+    int idSum= 0, index= idCurrent;
+    for (int l = L - 1; l >= 0; l--) {
+        idState[l] = index % K;
+        idSum += idState[l];
+        index /= K;
+    }
+    idState[L] = 0;
+    
+    int NVP_1_deplete = 0, NVP_1_order = 0;
+    // determine the action for a specific state
+    if (idState[0] > deplete_down_to) {
+        NVP_1_deplete = idState[0]- deplete_down_to;
+    }
+    if (K-1 + NVP_1_deplete - idSum > 1e-6){
+            NVP_1_order = int(K- 1 + NVP_1_deplete - idSum);
+    }
+        
+    
+    float opt_value = 0, state_value = 0;
+    
+    for (int i = NVP_1_deplete; i < NVP_1_deplete + 1; i++){
+        for (int j = NVP_1_order; j < NVP_1_order + 1; j++){
+            state_value= 0.;
+            for (int d = 0; d < max_demand; d++){
+                // decode idCurrent into idState
+                int idSum= 0, index= idCurrent;
+                for (int l = L - 1; l >= 0; l--) {
+                    idState[l] = index % K;
+                    idSum += idState[l];
+                    index /= K;
+                }
+                idState[L] = 0;
+                //deplete i units from idState
+                int remain_deplete = i;
+                for (int l = 0; l < L; l++) {
+                    if (remain_deplete <= idState[l]) {
+                        idState[l] -= remain_deplete;
+                        break;
+                    } else {
+                        remain_deplete -= idState[l];
+                        idState[l] = 0;
+                    }
+                }
+                //holding cost incurred
+                int hold = idSum - i;
+                //order j units
+                idState[L]= j;
+                //sell d units from idState
+                int sell = 0, remain_sell = d;
+                for (int l = 0; l < L+ 1; l++) {
+                    if (remain_sell <= idState[l]) {
+                        sell += remain_sell;
+                        idState[l] -= remain_sell;
+                        break;
+                    } else {
+                        remain_sell -= idState[l];
+                        sell += idState[l];
+                        idState[l] = 0;
+                    }
+                }
+                //dispose expired terms
+                int dispose = idState[0];
+                idState[0]= 0;
+                //get the index of the future state
+                int future = 0;
+                for (int l = 1; l < L + 1; l++) {
+                    future *= K;
+                    future += idState[l];
+                }
+                //get the value with respect to i, j, d
+                float state_value_sample = salvageValue * i
+                - holdingCost * hold
+                + discountRate * (-orderCost * j
+                                  + price * sell
+                                  - disposalCost * dispose
+                                  + inVector[future]);
+                state_value += (state_value_sample * distribution[d]);
+            }
+            if (state_value > opt_value + 1e-6){
+                opt_value = state_value;
+            }
+        }
+    }
+    
+    outVector[idCurrent] = opt_value;
+    deplete[idCurrent] = float(NVP_1_deplete);
+    order[idCurrent] = float(NVP_1_order);
+    
+}
 
 
 // to test the understanding of thread related concepts
