@@ -11,17 +11,17 @@ import MetalKit
 
 let fileManager = NSFileManager.defaultManager()
 // Reading paremeters from plist
- let plistPath = "/Users/zhanghailun/ParallelDP/ParallelDP/parameters.plist"
+// let plistPath = "/Users/zhanghailun/ParallelDP/ParallelDP/parameters.plist"
 // let plistPath = "/Users/jz/Developer/ParallelDP/ParallelDP/parameters.plist"
 
 // Alternatively, specify the plist file while running
-//let path = fileManager.currentDirectoryPath
-//let args = Process.arguments
-//if (args.count != 2) {
-//    print("Please specify the plist file for paremeters!")
-//    exit(1)
-//}
-//let plistPath = path + "/" + args[1]
+let path = fileManager.currentDirectoryPath
+let args = Process.arguments
+if (args.count != 2) {
+    print("Please specify the plist file for paremeters!")
+    exit(1)
+}
+let plistPath = path + "/" + args[1]
 //print(plistPath)
 
 if !fileManager.fileExistsAtPath(plistPath) {
@@ -48,7 +48,7 @@ let dist: [Float]! = dict!.valueForKey("Distribution") as? [Float]
 // Need to understand more about threadExecutionWidth for optimal config
 let threadExecutionWidth: Int! = dict!.valueForKey("ThreadExecutionWidth") as? Int
 
-print("The complexity is with Capacity", K,"and Dimension", L)
+//print("The complexity is with Capacity", K,"and Dimension", L)
 
 let max_demand: Float = Float(dist.count)
 // The order matters
@@ -79,17 +79,17 @@ let numThreadsPerGroup = MTLSize(width:threadExecutionWidth,height:1,depth:1)
 // Get the default device, which is the same as the one monitor is using
 var device: MTLDevice! = MTLCreateSystemDefaultDevice()
 // In the following, choose the device NOT used by monitor
-//let devices: [MTLDevice] = MTLCopyAllDevices()
-//for metalDevice: MTLDevice in devices {
-//    if metalDevice.headless == true {
-//        device = metalDevice
-//    }
-//}
-//// exit with an error message if all devices are used by monitor
-//if !device.headless {
-//    print("no dedicated device found")
-//    exit(1)
-//}
+let devices: [MTLDevice] = MTLCopyAllDevices()
+for metalDevice: MTLDevice in devices {
+    if metalDevice.headless == true {
+        device = metalDevice
+    }
+}
+// exit with an error message if all devices are used by monitor
+if !device.headless {
+    print("no dedicated device found")
+    exit(1)
+}
 
 // Build command queue
 var commandQueue: MTLCommandQueue! = device.newCommandQueue()
@@ -177,7 +177,7 @@ for t in 0..<numPeriods {
             var commandBufferIterateDP: MTLCommandBuffer! = commandQueue.commandBuffer()
             var encoderIterateDP = commandBufferIterateDP.computeCommandEncoder()
             
-            encoderIterateDP.setComputePipelineState(pipelineFilterIterate_NVP_1)
+            encoderIterateDP.setComputePipelineState(pipelineFilterIterate)
             
             encoderIterateDP.setBuffer(buffer[t%2], offset: 0, atIndex: 0)
             encoderIterateDP.setBuffer(buffer[(t+1)%2], offset: 0, atIndex: 1)
@@ -210,11 +210,16 @@ var finalResultArray2 = [Float](count: numberOfStates, repeatedValue: 0)
 data2.getBytes(&finalResultArray2, length:resultBufferSize)
 
 var end = NSDate()
-print("the time elapsed is ", Double(end.timeIntervalSinceDate(start)))
+
 //print(finalResultArray[0..<10])
 //print(finalResultArray1[0..<10])
 //print(finalResultArray2[0..<10])
-print(finalResultArray[numberOfStates - 10..<numberOfStates])
-print(finalResultArray1[numberOfStates - 10..<numberOfStates])
-print(finalResultArray2[numberOfStates - 10..<numberOfStates])
+for i in 0..<numberOfStates {
+    print(finalResultArray[i])
+}
+print("the time elapsed is ", Double(end.timeIntervalSinceDate(start)))
+
+//print(finalResultArray[numberOfStates - 10..<numberOfStates])
+//print(finalResultArray1[numberOfStates - 10..<numberOfStates])
+//print(finalResultArray2[numberOfStates - 10..<numberOfStates])
 
