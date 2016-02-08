@@ -10,11 +10,8 @@ import Foundation
 import MetalKit
 
 let fileManager = NSFileManager.defaultManager()
-// Reading paremeters from plist
-// let plistPath = "/Users/zhanghailun/ParallelDP/ParallelDP/parameters.plist"
-// let plistPath = "/Users/jz/Developer/ParallelDP/ParallelDP/parameters.plist"
 
-// Alternatively, specify the plist file while running
+// Specify the plist file while running
 let path = fileManager.currentDirectoryPath
 let args = Process.arguments
 if (args.count != 2) {
@@ -44,11 +41,10 @@ let disposalCost: Float! = dict!.valueForKey("DisposalCost") as? Float
 let discountRate: Float! = dict!.valueForKey("DiscountRate") as? Float
 let price: Float! = dict!.valueForKey("Price") as? Float
 let dist: [Float]! = dict!.valueForKey("Distribution") as? [Float]
-// hardcoded to the following number
-// Need to understand more about threadExecutionWidth for optimal config
+// Allow user to specify threadExecutionWidth depending on their own hardware
 let threadExecutionWidth: Int! = dict!.valueForKey("ThreadExecutionWidth") as? Int
 
-//print("The complexity is with Capacity", K,"and Dimension", L)
+print("The complexity is with Capacity", K, "and Dimension", L)
 
 let max_demand: Float = Float(dist.count)
 // The order matters
@@ -211,15 +207,10 @@ data2.getBytes(&finalResultArray2, length:resultBufferSize)
 
 var end = NSDate()
 
-//print(finalResultArray[0..<10])
-//print(finalResultArray1[0..<10])
-//print(finalResultArray2[0..<10])
+// Output data
 for i in 0..<numberOfStates {
     print(finalResultArray[i])
 }
+
+// Calculate how much computing time spent
 print("the time elapsed is ", Double(end.timeIntervalSinceDate(start)))
-
-//print(finalResultArray[numberOfStates - 10..<numberOfStates])
-//print(finalResultArray1[numberOfStates - 10..<numberOfStates])
-//print(finalResultArray2[numberOfStates - 10..<numberOfStates])
-

@@ -9,9 +9,6 @@
 #include <metal_stdlib>
 using namespace metal;
 
-// max dimension
-// __constant int max_dimension = 13;
-
 #define max_dimension 13
 
 kernel void initialize(const device uint *batch[[buffer(1)]],
@@ -20,11 +17,7 @@ kernel void initialize(const device uint *batch[[buffer(1)]],
                        uint id [[ thread_position_in_grid ]]) {
 
     // get the parameters
-//    float discountRate = parameters[6];
-//    float orderCost = parameters[4];
-//    float holdingCost = parameters[3];
     float salvageValue = parameters[2];
-
 
     // find current and parend id
     uint idCurrent = batch[0]*batch[1]+id;
@@ -175,7 +168,6 @@ kernel void iterate_fluid(const device uint *batch[[buffer(4)]],
     
     // find current and parend id
     uint idCurrent = batch[0]*batch[1]+id;
-    uint idParent = idCurrent - batch[0];
     
     // prepare a vector for decode
     int idState[max_dimension + 1];
@@ -293,7 +285,6 @@ kernel void iterate_NVP(const device uint *batch[[buffer(4)]],
     // get the parameters
     int K = int(parameters[0]), L = int(parameters[1]), numPeriods= int(parameters[10]);
     int max_demand = int(parameters[8]);
-    int mean_demand = int(parameters[9]);
     float salvageValue = parameters[2];
     float holdingCost = parameters[3];
     float orderCost = parameters[4];
@@ -326,9 +317,6 @@ kernel void iterate_NVP(const device uint *batch[[buffer(4)]],
             min_order = int(K-1 - idSum);
             max_order = int(K-1 - idSum) + 1;
         }
-//        min_order = order[idParent] - 1;
-//        min_order = min_order * int(min_order >= 0);
-//        max_order = min_order + 1;
     }
     else {
         if (idCurrent != 0){
@@ -428,9 +416,8 @@ kernel void iterate_NVP_1(const device uint *batch[[buffer(4)]],
                           uint id [[ thread_position_in_grid ]]) {
     
     // get the parameters
-    int K = int(parameters[0]), L = int(parameters[1]), numPeriods= int(parameters[10]);
+    int K = int(parameters[0]), L = int(parameters[1]);
     int max_demand = int(parameters[8]);
-    int mean_demand = int(parameters[9]);
     float salvageValue = parameters[2];
     float holdingCost = parameters[3];
     float orderCost = parameters[4];
@@ -442,7 +429,6 @@ kernel void iterate_NVP_1(const device uint *batch[[buffer(4)]],
     
     // find current and parend id
     uint idCurrent = batch[0]*batch[1]+id;
-    uint idParent = idCurrent - batch[0];
     
     // prepare a vector for decode
     int idState[max_dimension + 1];
