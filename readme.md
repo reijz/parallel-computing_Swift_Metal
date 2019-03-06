@@ -135,4 +135,8 @@ However, it is surprising that the 2,500 USD MacBook Pro 15" purchased in 2012 i
 
 [^power]: The MacPro power consumption can be found at [https://support.apple.com/en-us/HT201796](https://support.apple.com/en-us/HT201796)
 
+I am not surprised that Nvidia loses to Apple on scientific parallel computing using GPU, which is not a focus of Apple. Here is a screenshot I took while browsing the official [CUDA Document](http://docs.nvidia.com/cuda/cuda-c-programming-guide/#axzz3zfjtApED). 
 
+![drawing](./images/lousy_doc.png)
+
+Did you notice the red line under those words like "Quadro" and "Mathematica"? The table is a picture, presumably prepared using something like Word which highlights any misspelling. What an irresponsible team would do such a lousy job! I have problem believing how well things can be designed and optimized underneath the hood of the CUDA system. It seems Nvidia focus too much on marketing, since I've heard so much about it while its document is so lousy. You may take a look at the Apple document, e.g., [Metal Shading Language Guide](https://developer.apple.com/library/ios/documentation/Metal/Reference/MetalShadingLanguageGuide/Introduction/Introduction.html), just for comparison. I don't mean that giving the document a face lift would make the product great. What I mean is that we need to focus on making truely great stuff in every aspect we could possibly think of. 
